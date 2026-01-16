@@ -187,6 +187,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_conversation_admin: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_conversation_member: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
       search_users_for_chat: {
         Args: { result_limit?: number; search_query: string }
         Returns: {
@@ -194,6 +202,10 @@ export type Database = {
           display_name: string
           user_id: string
         }[]
+      }
+      users_share_conversation: {
+        Args: { _user_id1: string; _user_id2: string }
+        Returns: boolean
       }
     }
     Enums: {
