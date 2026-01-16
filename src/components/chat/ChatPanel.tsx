@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
@@ -7,6 +7,7 @@ import { ChatMessage } from './ChatMessage';
 import { MessageComposer } from './MessageComposer';
 import { TypingIndicator } from './TypingIndicator';
 import { UserAvatar } from './UserAvatar';
+import { VideoCallModal } from './VideoCallModal';
 import { Button } from '@/components/ui/button';
 import { 
   Phone, 
@@ -23,16 +24,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+type CallMode = 'audio' | 'video' | 'screenshare' | null;
+
 interface ChatPanelProps {
   conversation: ConversationWithDetails | null;
 }
 
 export function ChatPanel({ conversation }: ChatPanelProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, typingUsers, sendMessage, updateTypingStatus, markAsRead } = useMessages(
     conversation?.id || null
   );
+  const [callMode, setCallMode] = useState<CallMode>(null);
+
+  // Generate a unique room name based on conversation ID
+  const roomName = conversation ? `flowchat-${conversation.id}` : '';
 
   // Get display info for the conversation
   const otherMember = conversation?.type === 'private'
@@ -110,13 +117,31 @@ export function ChatPanel({ conversation }: ChatPanelProps) {
         </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full"
+            onClick={() => setCallMode('audio')}
+            title="Voice Call"
+          >
             <Phone className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full"
+            onClick={() => setCallMode('video')}
+            title="Video Call"
+          >
             <Video className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full"
+            onClick={() => setCallMode('screenshare')}
+            title="Screen Share"
+          >
             <Monitor className="w-5 h-5" />
           </Button>
           <DropdownMenu>
@@ -157,6 +182,16 @@ export function ChatPanel({ conversation }: ChatPanelProps) {
       <MessageComposer
         onSendMessage={sendMessage}
         onTyping={updateTypingStatus}
+      />
+
+      {/* Video Call Modal */}
+      <VideoCallModal
+        isOpen={callMode !== null}
+        onClose={() => setCallMode(null)}
+        roomName={roomName}
+        displayName={profile?.display_name || 'User'}
+        avatarUrl={profile?.avatar_url || undefined}
+        mode={callMode || 'video'}
       />
     </div>
   );
