@@ -9,6 +9,13 @@ export interface Profile {
   updated_at: string;
 }
 
+// Limited profile data returned by secure search RPC
+export interface SearchableProfile {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+}
+
 export interface Conversation {
   id: string;
   type: 'private' | 'group';

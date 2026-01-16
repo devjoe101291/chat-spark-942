@@ -1,9 +1,12 @@
 import { cn } from '@/lib/utils';
-import { Profile } from '@/lib/supabase-types';
+import { Profile, SearchableProfile } from '@/lib/supabase-types';
 import { User } from 'lucide-react';
 
+// Allow both full Profile and limited SearchableProfile
+type AvatarProfile = Profile | SearchableProfile | null;
+
 interface UserAvatarProps {
-  profile: Profile | null;
+  profile: AvatarProfile;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showStatus?: boolean;
   className?: string;
@@ -37,6 +40,9 @@ export function UserAvatar({ profile, size = 'md', showStatus = false, className
     }
   };
 
+  // Check if profile has status (full Profile vs SearchableProfile)
+  const profileStatus = profile && 'status' in profile ? profile.status : undefined;
+
   return (
     <div className={cn('relative', className)}>
       <div
@@ -67,7 +73,7 @@ export function UserAvatar({ profile, size = 'md', showStatus = false, className
           className={cn(
             'absolute bottom-0 right-0 rounded-full border-2 border-background',
             statusSizeClasses[size],
-            getStatusClass(profile?.status)
+            getStatusClass(profileStatus)
           )}
         />
       )}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Profile } from '@/lib/supabase-types';
+import { Profile, SearchableProfile } from '@/lib/supabase-types';
 
 export function useUsers() {
   const { user } = useAuth();
@@ -32,20 +32,20 @@ export function useUsers() {
     }
   }, [user]);
 
-  const searchUsers = async (query: string) => {
-    if (!user || !query.trim()) return [];
+  const searchUsers = async (query: string): Promise<SearchableProfile[]> => {
+    if (!user || !query.trim() || query.trim().length < 2) return [];
 
     try {
+      // Use secure RPC function that limits exposed data
       const { data, error: searchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .neq('user_id', user.id)
-        .ilike('display_name', `%${query}%`)
-        .limit(10);
+        .rpc('search_users_for_chat', {
+          search_query: query.trim(),
+          result_limit: 10
+        });
 
       if (searchError) throw searchError;
 
-      return data as Profile[];
+      return (data || []) as SearchableProfile[];
     } catch (err) {
       console.error('Error searching users:', err);
       return [];

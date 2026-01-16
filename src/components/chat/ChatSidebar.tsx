@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Profile, ConversationWithDetails } from '@/lib/supabase-types';
+import { Profile, ConversationWithDetails, SearchableProfile } from '@/lib/supabase-types';
 
 interface ChatSidebarProps {
   activeConversation: ConversationWithDetails | null;
@@ -47,7 +47,7 @@ export function ChatSidebar({ activeConversation, onSelectConversation }: ChatSi
   const [selectedUsers, setSelectedUsers] = useState<Profile[]>([]);
   const [groupName, setGroupName] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchableProfile[]>([]);
 
   const filteredConversations = conversations.filter((conv) => {
     if (!searchQuery) return true;
@@ -70,8 +70,8 @@ export function ChatSidebar({ activeConversation, onSelectConversation }: ChatSi
     }
   };
 
-  const handleStartPrivateChat = async (user: Profile) => {
-    const conversation = await createPrivateConversation(user.user_id);
+  const handleStartPrivateChat = async (userProfile: SearchableProfile | Profile) => {
+    const conversation = await createPrivateConversation(userProfile.user_id);
     if (conversation) {
       setIsNewChatOpen(false);
       // The conversation will be added via realtime subscription
