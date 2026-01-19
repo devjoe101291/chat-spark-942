@@ -9,12 +9,13 @@ export function useConversations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchConversations = useCallback(async () => {
-    if (!user) return;
+  const fetchConversations = useCallback(async (): Promise<ConversationWithDetails[]> => {
+    if (!user) return [];
 
     try {
       setLoading(true);
-      
+      setError(null);
+
       // Get all conversations the user is a member of
       const { data: memberData, error: memberError } = await supabase
         .from('conversation_members')
@@ -25,7 +26,7 @@ export function useConversations() {
 
       if (!memberData || memberData.length === 0) {
         setConversations([]);
-        return;
+        return [];
       }
 
       const conversationIds = memberData.map((m) => m.conversation_id);
@@ -96,15 +97,17 @@ export function useConversations() {
       });
 
       setConversations(conversationsWithDetails);
+      return conversationsWithDetails;
     } catch (err) {
       setError(err as Error);
       console.error('Error fetching conversations:', err);
+      return [];
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  const createPrivateConversation = async (otherUserId: string) => {
+  const createPrivateConversation = async (otherUserId: string): Promise<ConversationWithDetails | null> => {
     if (!user) return null;
 
     try {
@@ -130,10 +133,12 @@ export function useConversations() {
           .select('*')
           .in('id', commonConvIds)
           .eq('type', 'private')
-          .single();
+          .limit(1)
+          .maybeSingle();
 
         if (privateConv) {
-          return privateConv;
+          const updated = await fetchConversations();
+          return updated.find((c) => c.id === privateConv.id) || null;
         }
       }
 
@@ -159,15 +164,15 @@ export function useConversations() {
 
       if (memberError) throw memberError;
 
-      await fetchConversations();
-      return newConv;
+      const updated = await fetchConversations();
+      return updated.find((c) => c.id === newConv.id) || null;
     } catch (err) {
       console.error('Error creating conversation:', err);
       return null;
     }
   };
 
-  const createGroupConversation = async (name: string, memberIds: string[]) => {
+  const createGroupConversation = async (name: string, memberIds: string[]): Promise<ConversationWithDetails | null> => {
     if (!user) return null;
 
     try {
@@ -199,8 +204,8 @@ export function useConversations() {
 
       if (memberError) throw memberError;
 
-      await fetchConversations();
-      return newConv;
+      const updated = await fetchConversations();
+      return updated.find((c) => c.id === newConv.id) || null;
     } catch (err) {
       console.error('Error creating group conversation:', err);
       return null;
