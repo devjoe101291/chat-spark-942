@@ -15,6 +15,7 @@ export function useMessages(conversationId: string | null) {
 
     try {
       setLoading(true);
+      setError(null);
 
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
@@ -24,8 +25,13 @@ export function useMessages(conversationId: string | null) {
 
       if (messagesError) throw messagesError;
 
+      if (!messagesData || messagesData.length === 0) {
+        setMessages([]);
+        return;
+      }
+
       // Get all unique sender IDs
-      const senderIds = [...new Set(messagesData?.map((m) => m.sender_id) || [])];
+      const senderIds = [...new Set(messagesData.map((m) => m.sender_id))];
 
       // Fetch profiles for senders
       const { data: profiles, error: profilesError } = await supabase
@@ -36,7 +42,7 @@ export function useMessages(conversationId: string | null) {
       if (profilesError) throw profilesError;
 
       // Combine messages with sender profiles
-      const messagesWithSenders: MessageWithSender[] = (messagesData || []).map((msg) => ({
+      const messagesWithSenders: MessageWithSender[] = messagesData.map((msg) => ({
         ...msg,
         message_type: msg.message_type as 'text' | 'image' | 'file' | 'system',
         sender: profiles?.find((p) => p.user_id === msg.sender_id) as Profile,

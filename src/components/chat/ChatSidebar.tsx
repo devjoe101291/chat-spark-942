@@ -51,10 +51,10 @@ export function ChatSidebar({ activeConversation, onSelectConversation }: ChatSi
 
   const filteredConversations = conversations.filter((conv) => {
     if (!searchQuery) return true;
-    
+
     const searchLower = searchQuery.toLowerCase();
     if (conv.name?.toLowerCase().includes(searchLower)) return true;
-    
+
     return conv.members.some((m) =>
       m.profile?.display_name?.toLowerCase().includes(searchLower)
     );
@@ -74,19 +74,20 @@ export function ChatSidebar({ activeConversation, onSelectConversation }: ChatSi
     const conversation = await createPrivateConversation(userProfile.user_id);
     if (conversation) {
       setIsNewChatOpen(false);
-      // The conversation will be added via realtime subscription
+      onSelectConversation(conversation);
     }
   };
 
   const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedUsers.length === 0) return;
-    
+
     const memberIds = selectedUsers.map((u) => u.user_id);
     const conversation = await createGroupConversation(groupName, memberIds);
     if (conversation) {
       setIsNewGroupOpen(false);
       setGroupName('');
       setSelectedUsers([]);
+      onSelectConversation(conversation);
     }
   };
 
@@ -210,17 +211,24 @@ export function ChatSidebar({ activeConversation, onSelectConversation }: ChatSi
               value={userSearchQuery}
               onChange={(e) => handleUserSearch(e.target.value)}
             />
+
             <div className="max-h-64 overflow-y-auto space-y-1">
-              {(userSearchQuery ? searchResults : users).map((user) => (
-                <button
-                  key={user.user_id}
-                  onClick={() => handleStartPrivateChat(user)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
-                >
-                  <UserAvatar profile={user} size="sm" showStatus />
-                  <span className="font-medium">{user.display_name}</span>
-                </button>
-              ))}
+              {!userSearchQuery.trim() && users.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-10">
+                  Start typing (at least 2 letters) to find someone.
+                </p>
+              ) : (
+                (userSearchQuery ? searchResults : users).map((user) => (
+                  <button
+                    key={user.user_id}
+                    onClick={() => handleStartPrivateChat(user)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <UserAvatar profile={user} size="sm" showStatus />
+                    <span className="font-medium">{user.display_name}</span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>
