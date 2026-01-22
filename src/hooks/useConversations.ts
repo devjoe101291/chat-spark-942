@@ -142,11 +142,11 @@ export function useConversations() {
         }
       }
 
-      // Create new conversation
+      // Create new conversation - explicitly set created_by to auth.uid() for RLS
       const { data: newConv, error: convError } = await supabase
         .from('conversations')
         .insert({
-          type: 'private',
+          type: 'private' as const,
           created_by: user.id,
         })
         .select()
@@ -179,7 +179,7 @@ export function useConversations() {
       const { data: newConv, error: convError } = await supabase
         .from('conversations')
         .insert({
-          type: 'group',
+          type: 'group' as const,
           name,
           created_by: user.id,
         })
